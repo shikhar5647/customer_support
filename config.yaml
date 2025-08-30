@@ -1,0 +1,67 @@
+# Customer Support System Configuration
+
+guardrails:
+  max_response_length: 500
+  prohibited_topics:
+    - personal_info
+    - financial_data
+    - sensitive_data
+  confidence_threshold: 0.7
+  max_retries: 3
+  timeout_seconds: 30
+
+model:
+  model_name: "gemini-1.5-pro"
+  temperature: 0.3
+  max_tokens: 1000
+  top_p: 0.9
+  top_k: 40
+
+system:
+  max_conversation_length: 5000
+  max_session_duration: 3600
+  enable_logging: true
+  log_level: "INFO"
+  enable_metrics: true
+  enable_fallback: true
+
+# Domain-specific configurations
+domains:
+  ecommerce:
+    tools:
+      - order_lookup
+      - customer_validation
+    sop_priority: ["ECO001", "ECO002", "GEN001"]
+    
+  telecom:
+    tools:
+      - balance_check
+      - customer_validation
+    sop_priority: ["TEL001", "TEL002", "GEN001"]
+    
+  utilities:
+    tools:
+      - bill_inquiry
+      - customer_validation
+    sop_priority: ["UTL001", "UTL002", "GEN001"]
+    
+  general:
+    tools:
+      - customer_validation
+    sop_priority: ["GEN001", "GEN002"]
+
+# Quality assessment thresholds
+quality:
+  readability_threshold: 0.6
+  relevance_threshold: 0.7
+  completeness_threshold: 0.7
+  professionalism_threshold: 0.8
+  actionability_threshold: 0.6
+  overall_quality_threshold: 0.7
+
+# Fallback configuration
+fallback:
+  max_retries: 3
+  retry_delay: 1.0
+  escalation_threshold: 3
+  human_escalation_timeout: 300  # 5 minutes
