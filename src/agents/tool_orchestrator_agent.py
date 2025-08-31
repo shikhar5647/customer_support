@@ -44,7 +44,19 @@ class ToolOrchestratorAgent(BaseAgent):
     
     def get_schema(self) -> Type[BaseModel]:
         return ToolOrchestrationInput
-    
+
+    async def run_with_retry(self, agent_state) -> Any:
+        """Run tool orchestration with retry logic for compatibility with workflow"""
+        try:
+            # Run tool orchestration
+            result_state = await self.execute(agent_state)
+            return result_state
+            
+        except Exception as e:
+            self.logger.error(f"Tool orchestration failed: {str(e)}")
+            agent_state.error = f"Tool orchestration error: {str(e)}"
+            return agent_state
+
     async def execute(self, state: AgentState) -> AgentState:
         """Execute tool orchestration"""
         try:

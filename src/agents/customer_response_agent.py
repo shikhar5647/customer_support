@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Type, Optional
+from typing import Dict, Any, List, Type, Optional, Union
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
@@ -78,11 +78,17 @@ class CustomerResponseAgent(BaseAgent):
     def get_schema(self) -> Type[BaseModel]:
         return CustomerResponseInput
     
-    async def execute(self, state: AgentState) -> AgentState:
+    async def execute(self, state: Union[AgentState, Dict[str, Any]]) -> AgentState:
         """Execute the complete customer response workflow"""
         try:
+            # Convert dictionary to AgentState if needed
+            if isinstance(state, dict):
+                agent_state = AgentState(context=state)
+            else:
+                agent_state = state
+            
             # Initialize workflow state
-            workflow_state = self._initialize_workflow_state(state)
+            workflow_state = self._initialize_workflow_state(agent_state)
             
             # Run the LangGraph workflow
             final_state = await self.workflow.ainvoke(workflow_state)
@@ -91,33 +97,39 @@ class CustomerResponseAgent(BaseAgent):
             response_output = final_state.get("final_response", {})
             
             # Update main state
-            state.context.update(final_state)
-            state.context["customer_response"] = response_output
-            state.confidence = response_output.get("confidence_score", 0.0)
+            agent_state.context.update(final_state)
+            agent_state.context["customer_response"] = response_output
+            agent_state.confidence = response_output.get("confidence_score", 0.0)
             
             # Check if escalation is needed
             if response_output.get("escalation_required", False):
-                state.context["escalation_required"] = True
-                state.context["escalation_reason"] = response_output.get("escalation_reason", "Low confidence response")
+                agent_state.context["escalation_required"] = True
+                agent_state.context["escalation_reason"] = response_output.get("escalation_reason", "Low confidence response")
             
-            self.logger.info(f"Customer response generated successfully. Confidence: {state.confidence}")
+            self.logger.info(f"Customer response generated successfully. Confidence: {agent_state.confidence}")
             
         except Exception as e:
             self.logger.error(f"Customer response workflow failed: {str(e)}")
-            state.error = f"Workflow error: {str(e)}"
-            state.confidence = 0.0
+            agent_state.error = f"Workflow error: {str(e)}"
+            agent_state.confidence = 0.0
         
-        return state
+        return agent_state
     
-    def _initialize_workflow_state(self, state: AgentState) -> Dict[str, Any]:
+    def _initialize_workflow_state(self, state: Union[AgentState, Dict[str, Any]]) -> Dict[str, Any]:
         """Initialize state for LangGraph workflow"""
+        # Handle both AgentState and dict inputs
+        if isinstance(state, AgentState):
+            context = state.context
+        else:
+            context = state
+        
         return {
-            "customer_message": state.context.get("customer_message", ""),
-            "conversation_history": state.context.get("conversation_history", []),
-            "domain": state.context.get("domain", "general"),
-            "customer_id": state.context.get("customer_id"),
-            "session_id": state.context.get("session_id"),
-            "context": state.context.get("context", {}),
+            "customer_message": context.get("customer_message", ""),
+            "conversation_history": context.get("conversation_history", []),
+            "domain": context.get("domain", "general"),
+            "customer_id": context.get("customer_id"),
+            "session_id": context.get("session_id"),
+            "context": context.get("context", {}),
             "workflow_step": "intent_classification",
             "intent_classification": {},
             "sop_retrieval": {},

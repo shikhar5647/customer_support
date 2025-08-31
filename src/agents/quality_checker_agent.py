@@ -57,6 +57,45 @@ class QualityCheckerAgent:
         self.toxic_keywords = self._load_toxic_keywords()
         self.logger = logging.getLogger(__name__)
 
+    async def run_with_retry(self, agent_state) -> Any:
+        """Run the quality checker with retry logic for compatibility with workflow"""
+        try:
+            # Extract inputs from agent state
+            inputs = QualityCheckInput(
+                response_text=agent_state.context.get("response_text", ""),
+                customer_message=agent_state.context.get("customer_message", ""),
+                intent_classification=agent_state.context.get("intent_classification", {}),
+                sop_snippets=agent_state.context.get("sop_snippets", []),
+                tool_results=agent_state.context.get("tool_results", {})
+            )
+            
+            # Run quality check
+            result = await self(inputs)
+            
+            # Update agent state context
+            agent_state.context.update({
+                "quality_check": {
+                    "overall_score": result.overall_score,
+                    "sop_compliance": result.sop_compliance,
+                    "accuracy_score": result.accuracy_score,
+                    "relevance_score": result.relevance_score,
+                    "professionalism_score": result.professionalism_score,
+                    "completeness_score": result.completeness_score,
+                    "safety_issues": result.safety_issues,
+                    "improvement_suggestions": result.improvement_suggestions,
+                    "contains_pii": result.contains_pii,
+                    "toxicity_detected": result.toxicity_detected,
+                    "hallucination_risk": result.hallucination_risk
+                }
+            })
+            
+            return agent_state
+            
+        except Exception as e:
+            self.logger.error(f"Quality check failed: {str(e)}")
+            agent_state.error = f"Quality check error: {str(e)}"
+            return agent_state
+
     async def __call__(self, inputs: QualityCheckInput) -> QualityCheckOutput:
         """
         LangGraph requires nodes to be callable with input -> output

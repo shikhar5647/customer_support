@@ -60,7 +60,28 @@ class IntentClassifierAgent(BaseAgent):
     
     def get_schema(self) -> Type[BaseModel]:
         return IntentClassificationInput
-    
+
+    async def run_with_retry(self, agent_state) -> Any:
+        """Run intent classification with retry logic for compatibility with workflow"""
+        try:
+            # Extract inputs from agent state
+            inputs = IntentClassificationInput(
+                customer_message=agent_state.context.get("customer_message", ""),
+                conversation_history=agent_state.context.get("conversation_history", []),
+                domain=agent_state.context.get("domain", "general"),
+                customer_id=agent_state.context.get("customer_id")
+            )
+            
+            # Run intent classification
+            result_state = await self.execute(agent_state)
+            
+            return result_state
+            
+        except Exception as e:
+            self.logger.error(f"Intent classification failed: {str(e)}")
+            agent_state.error = f"Intent classification error: {str(e)}"
+            return agent_state
+
     async def execute(self, state: AgentState) -> AgentState:
         """Execute intent classification"""
         try:

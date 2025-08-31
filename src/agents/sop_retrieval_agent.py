@@ -35,7 +35,19 @@ class SOPRetrievalAgent(BaseAgent):
     
     def get_schema(self) -> Type[BaseModel]:
         return SOPRetrievalInput
-    
+
+    async def run_with_retry(self, agent_state) -> Any:
+        """Run SOP retrieval with retry logic for compatibility with workflow"""
+        try:
+            # Run SOP retrieval
+            result_state = await self.execute(agent_state)
+            return result_state
+            
+        except Exception as e:
+            self.logger.error(f"SOP retrieval failed: {str(e)}")
+            agent_state.error = f"SOP retrieval error: {str(e)}"
+            return agent_state
+
     async def execute(self, state: AgentState) -> AgentState:
         """Execute SOP retrieval"""
         try:
