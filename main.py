@@ -226,7 +226,7 @@ def main():
         
         # System information
         st.subheader("System Info")
-        st.write("**Model:** Gemini 1.5 Pro")
+        st.write("**Model:** gemini-2.5-pro")
         st.write("**Framework:** LangGraph")
         st.write("**Status:** Active")
 
