@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.output_parsers import JsonOutputParser
-from langgraph import StateGraph, END
+from langgraph.graph import StateGraph, END
 import asyncio
 import json
 
