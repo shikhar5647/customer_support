@@ -190,7 +190,8 @@ Respond in JSON format:
                 f"Customer Intent: {intent_info.get('primary_intent', 'unknown')} | Sentiment: {intent_info.get('sentiment', 'neutral')}"
             )
         if sop_snippets:
-            parts.append(f"Relevant SOPs:\n{'\n'.join(sop_snippets[:2])}")
+            sop_text = '\n'.join(sop_snippets[:2])
+            parts.append(f"Relevant SOPs:\n{sop_text}")
         if tool_results:
             tools_info = [f"{tool}: {result.get('status', 'unknown')}" for tool, result in tool_results.items()]
             parts.append(f"Tools Used: {', '.join(tools_info)}")
