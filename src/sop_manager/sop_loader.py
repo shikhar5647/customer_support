@@ -163,6 +163,23 @@ class SOPLoader:
         else:
             return 'general'
     
+    async def load_sop(self, sop_id: str) -> Optional[SOPDocument]:
+        """Load a specific SOP by ID"""
+        try:
+            # Search for SOP files that might contain this ID
+            for file_path in self.sop_directory.rglob("*"):
+                if file_path.suffix in self.supported_formats:
+                    sop = self.load_sop_from_file(file_path)
+                    if sop and sop.sop_id == sop_id:
+                        return sop
+            
+            self.logger.warning(f"SOP with ID '{sop_id}' not found")
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"Failed to load SOP {sop_id}: {str(e)}")
+            return None
+
     def create_sop_template(self, domain: str) -> Dict[str, Any]:
         """Create an SOP template"""
         return {

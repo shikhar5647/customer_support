@@ -48,7 +48,11 @@ class QualityCheckerAgent:
         )
         self.guardrails_config = guardrails_config or {}
         self.output_parser = JsonOutputParser(pydantic_object=QualityCheckOutput)
-        self.min_quality_score = self.guardrails_config.get("min_quality_score", 0.7)
+        # Handle both dict and Pydantic model cases
+        if hasattr(self.guardrails_config, 'confidence_threshold'):
+            self.min_quality_score = getattr(self.guardrails_config, 'confidence_threshold', 0.7)
+        else:
+            self.min_quality_score = self.guardrails_config.get("min_quality_score", 0.7) if isinstance(self.guardrails_config, dict) else 0.7
         self.pii_patterns = self._load_pii_patterns()
         self.toxic_keywords = self._load_toxic_keywords()
         self.logger = logging.getLogger(__name__)

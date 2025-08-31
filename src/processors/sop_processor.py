@@ -8,11 +8,11 @@ import asyncio
 from pathlib import Path
 import json
 
-from ..sop_manager.sop_loader import SOPLoader
-from ..sop_manager.sop_chunker import SOPChunker
-from ..sop_manager.sop_embedder import SOPEmbedder
-from ..sop_manager.sop_retriever import SOPRetriever
-from ..sop_manager.sop_validator import SOPValidator
+from sop_manager.sop_loader import SOPLoader
+from sop_manager.sop_chunker import SOPChunker
+from sop_manager.sop_embedder import SOPEmbedder
+from sop_manager.sop_retriever import SOPRetriever
+from sop_manager.sop_validator import SOPValidator
 
 logger = logging.getLogger(__name__)
 
