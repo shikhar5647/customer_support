@@ -137,7 +137,13 @@ class CustomerResponseAgent(BaseAgent):
             "response_generation": {},
             "quality_check": {},
             "final_response": {},
-            "errors": []
+            "errors": [],
+            "primary_intent": "",
+            "entities": {},
+            "urgency_level": "medium",
+            "sop_snippets": [],
+            "tool_results": {},
+            "response_text": ""
         }
     
     def _build_workflow(self) -> StateGraph:
@@ -146,34 +152,49 @@ class CustomerResponseAgent(BaseAgent):
         # Define workflow nodes
         async def classify_intent_node(state: Dict[str, Any]) -> Dict[str, Any]:
             """Intent classification node"""
-            agent_state = AgentState(context=state)
-            result_state = await self.intent_classifier.run_with_retry(agent_state)
-            
-            state.update(result_state.context)
-            if result_state.error:
-                state["errors"].append(f"Intent classification: {result_state.error}")
+            try:
+                agent_state = AgentState(context=state)
+                result_state = await self.intent_classifier.run_with_retry(agent_state)
+                
+                if result_state and hasattr(result_state, 'context'):
+                    state.update(result_state.context)
+                if result_state and hasattr(result_state, 'error') and result_state.error:
+                    state["errors"].append(f"Intent classification: {result_state.error}")
+                
+            except Exception as e:
+                state["errors"].append(f"Intent classification failed: {str(e)}")
             
             return state
         
         async def retrieve_sops_node(state: Dict[str, Any]) -> Dict[str, Any]:
             """SOP retrieval node"""
-            agent_state = AgentState(context=state)
-            result_state = await self.sop_retrieval.run_with_retry(agent_state)
-            
-            state.update(result_state.context)
-            if result_state.error:
-                state["errors"].append(f"SOP retrieval: {result_state.error}")
+            try:
+                agent_state = AgentState(context=state)
+                result_state = await self.sop_retrieval.run_with_retry(agent_state)
+                
+                if result_state and hasattr(result_state, 'context'):
+                    state.update(result_state.context)
+                if result_state and hasattr(result_state, 'error') and result_state.error:
+                    state["errors"].append(f"SOP retrieval: {result_state.error}")
+                
+            except Exception as e:
+                state["errors"].append(f"SOP retrieval failed: {str(e)}")
             
             return state
         
         async def orchestrate_tools_node(state: Dict[str, Any]) -> Dict[str, Any]:
             """Tool orchestration node"""
-            agent_state = AgentState(context=state)
-            result_state = await self.tool_orchestrator.run_with_retry(agent_state)
-            
-            state.update(result_state.context)
-            if result_state.error:
-                state["errors"].append(f"Tool orchestration: {result_state.error}")
+            try:
+                agent_state = AgentState(context=state)
+                result_state = await self.tool_orchestrator.run_with_retry(agent_state)
+                
+                if result_state and hasattr(result_state, 'context'):
+                    state.update(result_state.context)
+                if result_state and hasattr(result_state, 'error') and result_state.error:
+                    state["errors"].append(f"Tool orchestration: {result_state.error}")
+                
+            except Exception as e:
+                state["errors"].append(f"Tool orchestration failed: {str(e)}")
             
             return state
         
@@ -193,19 +214,34 @@ class CustomerResponseAgent(BaseAgent):
         
         async def quality_check_node(state: Dict[str, Any]) -> Dict[str, Any]:
             """Quality check node"""
-            agent_state = AgentState(context=state)
-            result_state = await self.quality_checker.run_with_retry(agent_state)
-            
-            state.update(result_state.context)
-            if result_state.error:
-                state["errors"].append(f"Quality check: {result_state.error}")
+            try:
+                agent_state = AgentState(context=state)
+                result_state = await self.quality_checker.run_with_retry(agent_state)
+                
+                if result_state and hasattr(result_state, 'context'):
+                    state.update(result_state.context)
+                if result_state and hasattr(result_state, 'error') and result_state.error:
+                    state["errors"].append(f"Quality check: {result_state.error}")
+                
+            except Exception as e:
+                state["errors"].append(f"Quality check failed: {str(e)}")
             
             return state
         
         async def finalize_response_node(state: Dict[str, Any]) -> Dict[str, Any]:
             """Finalize response node"""
-            final_response = self._create_final_response(state)
-            state["final_response"] = final_response
+            try:
+                final_response = self._create_final_response(state)
+                state["final_response"] = final_response
+            except Exception as e:
+                state["errors"].append(f"Finalization failed: {str(e)}")
+                state["final_response"] = {
+                    "response_text": "I apologize, but I'm experiencing technical difficulties. Please try again or contact support for assistance.",
+                    "confidence_score": 0.0,
+                    "escalation_required": True,
+                    "escalation_reason": "System error during finalization"
+                }
+            
             return state
         
         # Build the graph
