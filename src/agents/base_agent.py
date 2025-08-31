@@ -9,6 +9,7 @@ from langchain_core.runnables import Runnable
 import logging
 import time
 import uuid
+import asyncio
 
 logger = logging.getLogger(__name__)
 

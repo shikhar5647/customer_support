@@ -130,3 +130,7 @@ class SOPRetrievalAgent(BaseAgent):
             results.sort(key=lambda x: x.get("similarity_score", 0), reverse=True)
             
             return results
+            
+        except Exception as e:
+            self.logger.error(f"SOP search failed: {str(e)}")
+            return []

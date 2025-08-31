@@ -99,6 +99,12 @@ class Config:
         
         if os.getenv("MAX_RETRIES"):
             self.guardrails_config.max_retries = int(os.getenv("MAX_RETRIES"))
+        
+        if os.getenv("ENABLE_LOGGING"):
+            self.system_config.enable_logging = os.getenv("ENABLE_LOGGING").lower() == "true"
+        
+        if os.getenv("LOG_LEVEL"):
+            self.system_config.log_level = os.getenv("LOG_LEVEL")
     
     def get_config_dict(self) -> Dict[str, Any]:
         """Get configuration as dictionary"""
